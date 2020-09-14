@@ -17,3 +17,4 @@ function auto_select(){
 		}
   }
 }
+auto_select()
