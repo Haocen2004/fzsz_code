@@ -73,8 +73,8 @@ function main(){
 		});
 
         $("#as_submit").click(function(){
-            console.log("Submit Event.");
-            $(this).attr('disabled',true);
+			$(this).attr('disabled',true);
+			$('#as_switch').attr('disabled',true);
             mui.toast("已确认请求,正在等待选课系统开放");
             console.log("已确认请求,正在等待选课系统开放");
 			setTimeout("auto_select(true)","3000");
@@ -84,8 +84,6 @@ function main(){
         console.log("found v1");
         mui.toast("检测到V1型选课系统\n请选定要抢的课程然后按下确认选课按钮\n系统将自动接管抢课\n等待期间网页缓慢或未响应为正常现象");
         $('.do-submit').click(function(){
-            console.log("Submit Event.");
-            $(this).attr('disabled',true);
             mui.toast("已确认请求,正在等待选课系统开放");
             console.log("已确认请求,正在等待选课系统开放");
 			setTimeout("auto_select(false)","3000");
