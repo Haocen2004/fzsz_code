@@ -9,14 +9,15 @@ function auto_select(is_v2){
 				var s1=$('#as_s1').val(),s2=$('#as_s2').val();
 				Ajax('single_submit',s1);
 				Ajax('single_submit',s2);
+				1580
 			} else {
 				Ajax('submit');
 			}
 			console.log("Request send succeed!");
 			console.log("Send as "+as_ts);
 			as_send = true;
-			mui.toast("抢课请求发送成功，将在5秒后刷新页面");
-			setTimeout("window.location.reload()","5000");
+			mui.toast("抢课请求发送成功，将在5秒后打开新页面以供锁定，锁定前请勿关闭本页面以便提交报错信息");
+			setTimeout("window.open('http://szxk.fjyun.net/szxk/detail2.html')","5000");
 		}
 	}
 }
