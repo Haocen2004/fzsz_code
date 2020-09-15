@@ -2,7 +2,8 @@
 解放双手，自动抢课，福三中限定
 
 # 使用方法
-打开选课界面登录  
+
+打开选课界面<http://szxk.fjyun.net/szxk/detail2.html>登录  
 按下 F12 打开控制台  
 切换到 `Console` 或 `控制台` 标签页  
 复制 `src.js` 文件内容  

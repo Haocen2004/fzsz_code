@@ -22,9 +22,15 @@ function auto_select(is_v2){
 }
 
 function main(){
+	if (document.URL != 'http://szxk.fjyun.net/szxk/detail2.html') {
+		alert("请在正确界面注入！")
+		setTimeout("location.replace('http://szxk.fjyun.net/szxk/detail2.html')",3000);
+		return;
+	}
     if(!confirm("感谢您使用自动抢课脚本\n\n当前版本为测试版,不保证抢课成功率\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen")){
         return;
-    }
+	}
+	
     var c1=0,c2,as_credit,is_v2 = false,name = new Array(),uid = new Array();
     $("tr").each(function(){
         if($(this).attr('obj-id') != undefined){
