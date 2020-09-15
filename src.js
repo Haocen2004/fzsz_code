@@ -19,9 +19,12 @@ function decete(as_goal_ts,is_v2){
 		if ( as_ts >= as_goal_ts ){
 			if(is_v2){
 				var s1=$('#as_s1').val(),s2=$('#as_s2').val();
-				Ajax('single_submit',s1);
+				if (!s1 == s2){
+					Ajax('single_submit',s1);
+					console.log("single_submit_s1");
+				}
 				Ajax('single_submit',s2);
-				console.log("single_submit");
+				console.log("single_submit_s2");
 			} else {
 				Ajax('submit');
 				console.log("submit");
@@ -95,7 +98,14 @@ function main(){
 			$(this).attr('disabled',true);
 			$('#as_switch').attr('disabled',true);
             mui.toast("已确认请求,正在等待选课系统开放");
-            console.log("已确认请求,正在等待选课系统开放");
+			console.log("已确认请求,正在等待选课系统开放");
+			if($('#as_s1').val() == $('#as_s2').val()){
+				if(!confirm("课程选择相同，是否为误操作？\n按确认键继续操作")){
+					$(this).attr('disabled',false);
+					$('#as_switch').attr('disabled',false);
+					return;
+				}
+			}
 			auto_select(true);
         });
     } else {
