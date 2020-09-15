@@ -1,7 +1,19 @@
 function auto_select(is_v2){
-	var as_ts,as_send,as_goal_ts;
+	var as_ts,as_left,as_goal_ts;
+	as_goal_ts = 1600180774000;
+	as_ts = (new Date()).valueOf();
+	as_left = as_goal_ts - as_ts;
+	console.log(as_left);
+	console.log(as_left - 10000);
+	if (as_left <= 10000) {
+		decete(as_goal_ts,is_v2);
+	} else {
+		setTimeout("decete("+as_goal_ts+","+is_v2+")",as_left - 10000);
+	}
+}
+function decete(as_goal_ts,is_v2){
+	var as_ts,as_send;
 	as_send = false;
-	as_goal_ts = 1600178400000;
 	while(!as_send){
 		as_ts = (new Date()).valueOf();
 		if ( as_ts >= as_goal_ts ){
@@ -9,9 +21,10 @@ function auto_select(is_v2){
 				var s1=$('#as_s1').val(),s2=$('#as_s2').val();
 				Ajax('single_submit',s1);
 				Ajax('single_submit',s2);
-				1580
+				console.log("single_submit");
 			} else {
 				Ajax('submit');
+				console.log("submit");
 			}
 			console.log("Request send succeed!");
 			console.log("Send as "+as_ts);
@@ -21,7 +34,6 @@ function auto_select(is_v2){
 		}
 	}
 }
-
 function main(){
 	if (document.URL != 'http://szxk.fjyun.net/szxk/detail2.html') {
 		alert("请在正确界面注入！")
@@ -75,7 +87,7 @@ function main(){
 			$('.do-submit').click(function(){
 				mui.toast("已确认请求,正在等待选课系统开放");
 				console.log("已确认请求,正在等待选课系统开放");
-				setTimeout("auto_select(false)","3000");
+				auto_select(false);
 			});
 		});
 
@@ -84,7 +96,7 @@ function main(){
 			$('#as_switch').attr('disabled',true);
             mui.toast("已确认请求,正在等待选课系统开放");
             console.log("已确认请求,正在等待选课系统开放");
-			setTimeout("auto_select(true)","3000");
+			auto_select(true);
         });
     } else {
         $(".foot").off("click",".do-submit");
@@ -93,7 +105,7 @@ function main(){
         $('.do-submit').click(function(){
             mui.toast("已确认请求,正在等待选课系统开放");
             console.log("已确认请求,正在等待选课系统开放");
-			setTimeout("auto_select(false)","3000");
+			auto_select(false);
         });
     }
 }
