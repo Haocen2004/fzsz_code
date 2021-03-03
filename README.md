@@ -1,6 +1,6 @@
 # 福三中通用代码仓库
 目前包含：  
-- 自动抢课助手 `src.js`
+- 自动抢课助手 `auto_select_class.js`
 - 上网账号加密代码 `do_encrypt_rc4.js` 
 - 宪法学习自动完成 `xianfa_auto.js`
 - 网络评教辅助点击 `pingjiao_auto.js`
@@ -33,6 +33,10 @@
 >A:那我也没办法  
 
 # Update Log
+2021.3.3  
+- 重命名抢课脚本
+- 修改了部分提示
+
 2020.12.26
 - 加入评教系统自动化
 
