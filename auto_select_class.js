@@ -41,17 +41,20 @@ function decete(as_goal_ts,is_v2){
 	}
 }
 function main(){
+	console.log('初始化脚本中...');
+	mui.toast('初始化脚本中...');
+	var total_c = parseInt($('.elective select').find('option:selected').attr('obj-credit'));
 	if (document.URL != 'http://szxk.fjyun.net/szxk/detail2.html') {
 		alert("请在正确界面使用本脚本")
 		setTimeout("location.replace('http://szxk.fjyun.net/szxk/detail2.html')",3000);
 		return;
 	}
 	if ((new Date()).valueOf() > as_goal_ts) {
-		alert("错误的时间戳！");
+		alert("时间戳设置错误！请修改后再试！");
 		return;
 	}
-	var total_c = parseInt($('.elective select').find('option:selected').attr('obj-credit'));
-    if(!confirm(total_c+"\n感谢您使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因见readme.md\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen\nLast Update: 2021.03.04")){
+	var realname = $('.do-real-name').html().split('&nbsp;');
+    if(!confirm(realname[1]+" "+realname[0]+"\n欢迎使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因可见readme.md\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen\nLast Update: 2021.03.04")){
         return;
 	}
     var c1=0,c2,as_credit,is_v2 = false,name = new Array(),uid = new Array();
@@ -80,7 +83,7 @@ function main(){
     });
     if (is_v2){
         
-		mui.toast("检测到V2型选课系统\n请在修改后的网页上选课提交\n等待期间网页缓慢或未响应为正常现象");
+		mui.toast("检测到双选选课系统\n请在修改后的网页上选课提交\n等待期间网页缓慢或未响应为正常现象");
 		console.log("found v2");
         var div = '<div id="as_div" style="display: block;position:fixed;z-index:9999;background-color:#66ccff;text-align:center;font-color:black;"><p style="font-size:x-large;">选择课程时请注意课程备注！<br>不支持抢2节相同课程！<br>如有需要请点击切换按钮！</p><br><p>课程一</p><select id="as_s1">' ;
         var selector = "";
@@ -88,7 +91,7 @@ function main(){
             selector = selector + "<option value="+uid[i]+">"+name[i]+"</option>";
         }
         selector = selector + "</select>";
-        div =div +selector + '<br><p>课程二</p><select id="as_s2">' + selector+ '<br><button id="as_submit">提交</button><button id="as_switch">切换模式</button></div>';
+        div =div +selector + '<br><p>课程二</p><select id="as_s2">' + selector+ '<br><button id="as_submit">提交</button><button id="as_switch">切换至单选模式</button></div>';
         $("body").append(div); 
 		$("table").hide();
 		$("#as_switch").click(function(){
@@ -96,7 +99,7 @@ function main(){
 			$("table").show();
 			$(".foot").off("click",".do-submit");
 			console.log("switch to v1");
-			mui.toast("已切换至V1选课\n请选定要抢的课程然后按下确认选课按钮\n系统将自动接管抢课\n等待期间网页缓慢或未响应为正常现象");
+			mui.toast("已切换至单选选课\n如误操作请刷新页面并重新激活脚本\n请选定要抢的课程然后按下确认选课按钮\n脚本将自动接管选课逻辑\n等待期间网页缓慢或未响应为正常现象");
 			$('.do-submit').click(function(){
 				mui.toast("已确认请求,正在等待选课系统开放");
 				console.log("已确认请求,正在等待选课系统开放");
@@ -121,7 +124,7 @@ function main(){
     } else {
         $(".foot").off("click",".do-submit");
         console.log("found v1");
-        mui.toast("检测到V1型选课系统\n请选定要抢的课程然后按下确认选课按钮\n系统将自动接管抢课\n等待期间网页缓慢或未响应为正常现象");
+        mui.toast("检测到单选选课系统\n请选定要抢的课程然后按下确认选课按钮\n脚本将自动接管选课逻辑\n等待期间网页缓慢或未响应为正常现象");
         $('.do-submit').click(function(){
             mui.toast("已确认请求,正在等待选课系统开放");
             console.log("已确认请求,正在等待选课系统开放");
