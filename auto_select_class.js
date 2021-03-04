@@ -42,10 +42,8 @@ function decete(as_goal_ts,is_v2){
 }
 function main(){
 	console.log('初始化脚本中...');
-	mui.toast('初始化脚本中...');
-	var total_c = parseInt($('.elective select').find('option:selected').attr('obj-credit'));
 	if (document.URL != 'http://szxk.fjyun.net/szxk/detail2.html') {
-		alert("请在正确界面使用本脚本")
+		alert("请在正确界面使用本脚本");
 		setTimeout("location.replace('http://szxk.fjyun.net/szxk/detail2.html')",3000);
 		return;
 	}
@@ -53,6 +51,8 @@ function main(){
 		alert("时间戳设置错误！请修改后再试！");
 		return;
 	}
+	mui.toast('初始化脚本中...');
+	var total_c = parseInt($('.elective select').find('option:selected').attr('obj-credit'));
 	var realname = $('.do-real-name').html().split('&nbsp;');
     if(!confirm(realname[1]+" "+realname[0]+"\n欢迎使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因可见readme.md\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen\nLast Update: 2021.03.04")){
         return;
@@ -71,12 +71,12 @@ function main(){
 				}
 				if (c2 == 2){
 					as_credit = parseInt(element.innerHTML);
-					console.log(as_credit)
+					console.log(as_credit);
                 }
             });
 			if (as_credit < total_c && is_v2 == false) {
 				is_v2 = true;
-				console.log('set v2 = true')
+				console.log('set v2 = true');
 			}
             c1 = c1 + 1;
         }
