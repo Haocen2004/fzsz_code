@@ -1,6 +1,9 @@
+var as_goal_ts = 1614866400000;
+//默认值为 2021.03.04 22:00:00
+
+
 function auto_select(is_v2){
-	var as_ts,as_left,as_goal_ts;
-	as_goal_ts = 1600180774000;
+	var as_ts,as_left;
 	as_ts = (new Date()).valueOf();
 	as_left = as_goal_ts - as_ts;
 	console.log(as_left);
@@ -43,10 +46,14 @@ function main(){
 		setTimeout("location.replace('http://szxk.fjyun.net/szxk/detail2.html')",3000);
 		return;
 	}
-    if(!confirm("感谢您使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因见readme.md2\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen")){
+	if ((new Date()).valueOf() > as_goal_ts) {
+		alert("错误的时间戳！");
+		return;
+	}
+	var total_c = parseInt($('.elective select').find('option:selected').attr('obj-credit'));
+    if(!confirm(total_c+"\n感谢您使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因见readme.md\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen\nLast Update: 2021.03.04")){
         return;
 	}
-	
     var c1=0,c2,as_credit,is_v2 = false,name = new Array(),uid = new Array();
     $("tr").each(function(){
         if($(this).attr('obj-id') != undefined){
@@ -56,22 +63,25 @@ function main(){
             $(this).children().toArray().forEach(element => {
                 c2 = c2 + 1;
                 if (c2 == 1){
-                    name[c1] = element.innerHTML;
+					name[c1] = element.innerHTML;
+					console.log(name[c1]);
 				}
 				if (c2 == 2){
-                    as_credit = parseInt(element.innerHTML);
+					as_credit = parseInt(element.innerHTML);
+					console.log(as_credit)
                 }
             });
-            if (as_credit == 1 && is_v2 == false) {
-                is_v2 = true;
-            }
+			if (as_credit < total_c && is_v2 == false) {
+				is_v2 = true;
+				console.log('set v2 = true')
+			}
             c1 = c1 + 1;
         }
     });
     if (is_v2){
         
-        mui.toast("检测到V2型选课系统\n请在修改后的网页上选课提交\n等待期间网页缓慢或未响应为正常现象");
-        console.log("found v2");
+		mui.toast("检测到V2型选课系统\n请在修改后的网页上选课提交\n等待期间网页缓慢或未响应为正常现象");
+		console.log("found v2");
         var div = '<div id="as_div" style="display: block;position:fixed;z-index:9999;background-color:#66ccff;text-align:center;font-color:black;"><p style="font-size:x-large;">选择课程时请注意课程备注！<br>不支持抢2节相同课程！<br>如有需要请点击切换按钮！</p><br><p>课程一</p><select id="as_s1">' ;
         var selector = "";
         for (let i = 0; i < name.length; i++) {
@@ -119,4 +129,4 @@ function main(){
         });
     }
 }
-main()
+setTimeout("main()",3000);
