@@ -39,11 +39,11 @@ function decete(as_goal_ts,is_v2){
 }
 function main(){
 	if (document.URL != 'http://szxk.fjyun.net/szxk/detail2.html') {
-		alert("请在正确界面注入！")
+		alert("请在正确界面使用本脚本")
 		setTimeout("location.replace('http://szxk.fjyun.net/szxk/detail2.html')",3000);
 		return;
 	}
-    if(!confirm("感谢您使用自动抢课脚本\n\n当前版本为测试版,不保证抢课成功率\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen")){
+    if(!confirm("感谢您使用自动抢课脚本\n\n脚本不保证抢课成功，详细原因见readme.md2\n请勿滥用并承诺自愿承担一切后果！\nPowered By Hao_cen")){
         return;
 	}
 	
