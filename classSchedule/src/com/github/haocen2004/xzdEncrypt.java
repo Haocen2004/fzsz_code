@@ -1,14 +1,354 @@
 package com.github.haocen2004;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Scanner;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 public class xzdEncrypt {
+
+    private static String pw, ac, epw, req, key, sid, name, userid, term, year, feedback;
+    private static List<String> g1, g2, g3;
+
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Account: ");
+            ac = scanner.next();
+            System.out.print("Password：");
+            pw = scanner.next();
+            System.out.println("======================");
+            System.out.println("Account: " + ac);
+            System.out.println("Password: " + pw);
+            epw = xzdEncrypt.encrypt(pw);
+            System.out.println("Encrypted Password: " + epw);
+            System.out.println("======================");
+
+
+            JSONObject req_json = new JSONObject();
+            JSONObject cond_json = new JSONObject();
+            cond_json.put("USERNAME", ac);
+            cond_json.put("PASSWORD", epw);
+            cond_json.put("imei", "");
+            cond_json.put("imsi", "");
+            cond_json.put("iccid", "");
+            cond_json.put("mac", "020000000000");
+            req_json.put("request_type", "mobile_login_v2");
+            req_json.put("cond", cond_json);
+            System.out.println(cond_json.toString());
+            System.out.println(req_json.toString());
+
+
+            req = xzdEncrypt.sign(req_json);
+
+            feedback = sendPost("http://m.fzsz.net/api_abc/api-s1.php", req);
+            System.out.println(feedback);
+
+            JSONObject account_json = new JSONObject(feedback);
+            if (account_json.getInt("code") == 0) {
+                key = account_json.getString("key");
+                sid = account_json.getString("sid");
+                name = account_json.getString("name");
+                userid = account_json.getString("userId");
+                year = account_json.getString("cur_school_year");
+                term = account_json.getString("cur_school_term");
+                System.out.println("======================");
+                System.out.println("Login Succeed");
+                System.out.println("User Name: " + name);
+                System.out.println("User Id: " + userid);
+                System.out.println("Key: " + key);
+                System.out.println("Sid: " + sid);
+                System.out.println("======================");
+
+            } else {
+                System.out.println("======================");
+                System.out.println("Login Failed");
+                System.out.println("======================");
+                return;
+            }
+        } else {
+            name = "刘会坚";
+            userid = "3674";
+            key = "46da4060648b0555af03d74521376b11";
+            sid = "F43E7ABA5723906B0011CB40DE5DB424";
+            year = "2020";
+            term = "2";
+            System.out.println("======================");
+            System.out.println("Load From Cache");
+            System.out.println("User Name: " + name);
+            System.out.println("User Id: " + userid);
+            System.out.println("Key: " + key);
+            System.out.println("Sid: " + sid);
+            System.out.println("======================");
+        }
+        JSONObject getClassJson = new JSONObject();
+        JSONObject cond_json2 = new JSONObject();
+        cond_json2.put("school_year", year);
+        cond_json2.put("school_term", term);
+        cond_json2.put("user_id", userid);
+        getClassJson.put("cmd", "get_user_class");
+        getClassJson.put("key", key);
+        getClassJson.put("sid", sid);
+        getClassJson.put("cond", cond_json2);
+
+        req = xzdEncrypt.sign(getClassJson);
+
+        feedback = sendPost("http://m.fzsz.net/api_abc/api-s1.php", req);
+        System.out.println(feedback);
+        JSONObject scheduleJson = new JSONObject(feedback);
+        JSONObject scheduleJson2 = scheduleJson.getJSONObject("results");
+        JSONArray jsonArray = scheduleJson2.getJSONArray("Data");
+        g1 = new ArrayList<>();
+        g2 = new ArrayList<>();
+        g3 = new ArrayList<>();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONArray jsonArray1 = jsonArray.getJSONArray(i);
+            if (jsonArray1.getInt(2) <= 20) {
+                switch (jsonArray1.getInt(4)) {
+                    case 1:
+                        g1.add(jsonArray1.getString(0));
+                        break;
+                    case 2:
+                        g2.add(jsonArray1.getString(0));
+                        break;
+                    case 3:
+                        g3.add(jsonArray1.getString(0));
+                        break;
+                }
+            }
+        }
+        StringBuilder s = new StringBuilder();
+        s.append("var courseList = [[");
+        s.append("\n/*高一*/\n");
+        for (String grade_id : g1) {
+            String info = getClassSchedule(grade_id);
+            if (info.equals("")) {
+                System.out.println("Error: getClassSchedule " + grade_id);
+            } else {
+                s.append("\n").append(info).append(",");
+            }
+        }
+        s.delete(s.length() - 1, s.length()).append("],\n\n[");
+        s.append("\n/*高二*/\n");
+        for (String grade_id : g2) {
+            String info = getClassSchedule(grade_id);
+            if (info.equals("")) {
+                System.out.println("Error: getClassSchedule " + grade_id);
+            } else {
+                s.append("\n").append(info).append(",");
+            }
+        }
+        s.delete(s.length() - 1, s.length()).append("],\n\n[");
+        s.append("\n/*高三*/\n");
+        for (String grade_id : g3) {
+            String info = getClassSchedule(grade_id);
+            if (info.equals("")) {
+                System.out.println("Error: getClassSchedule " + grade_id);
+            } else {
+                s.append("\n").append(info).append(",");
+            }
+        }
+        s.delete(s.length() - 1, s.length()).append("]];");
+
+
+        System.out.println("Final:" + s.toString());
+    }
+
+    public static String getClassSchedule(String grade_id) {
+
+
+        JSONObject getSchJson = new JSONObject();
+        JSONObject getGaokaoJson = new JSONObject();
+        JSONObject cond_json3 = new JSONObject();
+        JSONObject page = new JSONObject();
+        String feedback = null;
+        cond_json3.put("school_year", year);
+        cond_json3.put("school_term", term);
+        cond_json3.put("grade_id", grade_id);
+
+        getGaokaoJson.put("cmd", "get_class_gaokao_major");
+        getGaokaoJson.put("cond", cond_json3);
+        getGaokaoJson.put("key", key);
+        getGaokaoJson.put("sid", sid);
+        String gcsReq = xzdEncrypt.sign(getGaokaoJson);
+        boolean b = true;
+        while (b) {
+            try {
+                System.out.println("Getting Gao Kao Major..." + grade_id);
+                feedback = sendPost("http://m.fzsz.net/api_abc/api-s1.php", gcsReq);
+                b = false;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        JSONObject gaoKaoJson = new JSONObject(feedback);
+        String major = "";
+        try {
+            major = gaoKaoJson.getJSONArray("results").getJSONObject(0).getString("gaokao_major");
+        } catch (Exception e) {
+            major = "";
+        }
+        cond_json3.put("user_id", "0");
+        cond_json3.put("gaokao_major", major);
+        cond_json3.put("school_calendar_id", "446");
+        page.put("limit", "100");
+        page.put("pageIdx", "1");
+
+        getSchJson.put("cmd", "get_school_courses_schedule");
+        getSchJson.put("page", page);
+        getSchJson.put("cond", cond_json3);
+        getSchJson.put("key", key);
+        getSchJson.put("sid", sid);
+        gcsReq = xzdEncrypt.sign(getSchJson);
+        b = true;
+
+        while (b) {
+            try {
+                System.out.println("Getting Class Schedule..." + grade_id);
+                feedback = sendPost("http://m.fzsz.net/api_abc/api-s1.php", gcsReq);
+                b = false;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        JSONObject feedbackJson = new JSONObject(feedback);
+        if (feedbackJson.getInt("code") != 0) {
+            return "null";
+        }
+        JSONArray dataJsonArray;
+        JSONObject resultJson;
+        HashMap<String, String> d1 = new HashMap<>(), d2 = new HashMap<>(), d3 = new HashMap<>(), d4 = new HashMap<>(), d5 = new HashMap<>();
+        try {
+            resultJson = feedbackJson.getJSONObject("results");
+            dataJsonArray = resultJson.getJSONArray("Data");
+            for (int i = 0; i < dataJsonArray.length(); i++) {
+                JSONArray dailyJsonArray = dataJsonArray.getJSONArray(i);
+                for (int j = 0; j < dailyJsonArray.length(); j++) {
+                    switch (dailyJsonArray.getString(3)) {
+                        case "1":
+                            d1.put(dailyJsonArray.getString(5), dailyJsonArray.getString(7));
+                            break;
+                        case "2":
+                            d2.put(dailyJsonArray.getString(5), dailyJsonArray.getString(7));
+                            break;
+                        case "3":
+                            d3.put(dailyJsonArray.getString(5), dailyJsonArray.getString(7));
+                            break;
+                        case "4":
+                            d4.put(dailyJsonArray.getString(5), dailyJsonArray.getString(7));
+                            break;
+                        case "5":
+                            d5.put(dailyJsonArray.getString(5), dailyJsonArray.getString(7));
+                            break;
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+            return "";
+        }
+
+        if (d1.size() < 8) {
+            for (int i = 0; i < (8 - d1.size()); i++) {
+                d1.put("20", "学科拓展课程");
+            }
+        }
+        if (d2.size() < 8) {
+            for (int i = 0; i < (8 - d2.size()); i++) {
+                d2.put("20", "学科拓展课程");
+            }
+        }
+        if (d3.size() < 8) {
+            for (int i = 0; i < (8 - d3.size()); i++) {
+                d3.put("20", "学科拓展课程");
+            }
+        }
+        if (d4.size() < 8) {
+            for (int i = 0; i < (8 - d4.size()); i++) {
+                d4.put("20", "学科拓展课程");
+            }
+        }
+        if (d5.size() < 8) {
+            for (int i = 0; i < (8 - d5.size()); i++) {
+                d5.put("20", "学科拓展课程");
+            }
+        }
+        StringBuilder result = new StringBuilder();
+        result.append("[[");
+        for (String className : d1.values()) {
+            result.append("\"").append(className).append("\",");
+        }
+        result.delete(result.length() - 1, result.length()).append("],");
+        result.append("[");
+        for (String className : d2.values()) {
+            result.append("\"").append(className).append("\",");
+        }
+        result.delete(result.length() - 1, result.length()).append("],");
+        result.append("[");
+        for (String className : d3.values()) {
+            result.append("\"").append(className).append("\",");
+        }
+        result.delete(result.length() - 1, result.length()).append("],");
+        result.append("[");
+        for (String className : d4.values()) {
+            result.append("\"").append(className).append("\",");
+        }
+        result.delete(result.length() - 1, result.length()).append("],");
+        result.append("[");
+        for (String className : d5.values()) {
+            result.append("\"").append(className).append("\",");
+        }
+        result.delete(result.length() - 1, result.length()).append("]]");
+        System.out.println(result.toString());
+        return result.toString();
+    }
+
+    public static String sendPost(String url, String param) {
+        PrintWriter out = null;
+        ByteArrayOutputStream gout = new ByteArrayOutputStream();
+        try {
+            URL realUrl = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) realUrl.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("User-Agent", "okhttp/3.14.1");
+            conn.setRequestProperty("Accept-Encoding", "gzip");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            out = new PrintWriter(conn.getOutputStream());
+            out.print(param);
+            out.flush();
+            try {
+                GZIPInputStream ungzip = new GZIPInputStream(conn.getInputStream());
+                byte[] buffer = new byte[256];
+                int n;
+                while ((n = ungzip.read(buffer)) >= 0) {
+                    gout.write(buffer, 0, n);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            Logger.getLogger("test").info("sendPost: Failed.");
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+        return gout.toString();
+    }
+
     private static String s1;
 
     private static String s2;
@@ -144,6 +484,7 @@ public class xzdEncrypt {
             return null;
         }
     }
+
     private static int a;
 
     private static int b;
@@ -154,9 +495,9 @@ public class xzdEncrypt {
 
     private static final int[] e = new int[16];
 
-    private static final char[] f = new char[] {
+    private static final char[] f = new char[]{
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'a', 'b', 'c', 'd', 'e', 'f' };
+            'a', 'b', 'c', 'd', 'e', 'f'};
 
     private static int a(int paramInt1, int paramInt2) {
         return (paramInt2 == 0) ? paramInt1 : (paramInt1 >> 32 - paramInt2 & Integer.MAX_VALUE >> 31 - paramInt2 | paramInt1 << paramInt2);
@@ -191,10 +532,10 @@ public class xzdEncrypt {
     }
 
     private static void a(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-        paramArrayOfbyte[paramInt1] = (byte)(paramInt2 & 0xFF);
-        paramArrayOfbyte[paramInt1 + 1] = (byte)(paramInt2 >> 8 & 0xFF);
-        paramArrayOfbyte[paramInt1 + 2] = (byte)(paramInt2 >> 16 & 0xFF);
-        paramArrayOfbyte[paramInt1 + 3] = (byte)(paramInt2 >> 24 & 0xFF);
+        paramArrayOfbyte[paramInt1] = (byte) (paramInt2 & 0xFF);
+        paramArrayOfbyte[paramInt1 + 1] = (byte) (paramInt2 >> 8 & 0xFF);
+        paramArrayOfbyte[paramInt1 + 2] = (byte) (paramInt2 >> 16 & 0xFF);
+        paramArrayOfbyte[paramInt1 + 3] = (byte) (paramInt2 >> 24 & 0xFF);
     }
 
     private static void a(int[] paramArrayOfint) {
@@ -349,7 +690,7 @@ public class xzdEncrypt {
             } else {
                 n = 0;
             }
-            arrayOfByte2[k] = (byte)n;
+            arrayOfByte2[k] = (byte) n;
         }
         arrayOfByte2[i] = Byte.MIN_VALUE;
         if (i <= 55) {
@@ -399,7 +740,7 @@ public class xzdEncrypt {
 
     static class z {
 
-        private final int[] a = new int[] { 1732584193, -271733879, -1732584194, 271733878, -1009589776 };
+        private final int[] a = new int[]{1732584193, -271733879, -1732584194, 271733878, -1009589776};
 
         private final int[] b = new int[5];
 
@@ -438,7 +779,7 @@ public class xzdEncrypt {
             arrayOfChar[13] = 'd';
             arrayOfChar[14] = 'e';
             arrayOfChar[15] = 'f';
-            return new String(new char[] { arrayOfChar[paramByte >>> 4 & 0xF], arrayOfChar[paramByte & 0xF] });
+            return new String(new char[]{arrayOfChar[paramByte >>> 4 & 0xF], arrayOfChar[paramByte & 0xF]});
         }
 
         private void a() {
@@ -510,10 +851,10 @@ public class xzdEncrypt {
         }
 
         private void a(int paramInt1, byte[] paramArrayOfbyte, int paramInt2) {
-            paramArrayOfbyte[paramInt2] = (byte)(byte)(paramInt1 >>> 24);
-            paramArrayOfbyte[paramInt2 + 1] = (byte)(byte)(paramInt1 >>> 16);
-            paramArrayOfbyte[paramInt2 + 2] = (byte)(byte)(paramInt1 >>> 8);
-            paramArrayOfbyte[paramInt2 + 3] = (byte)(byte)paramInt1;
+            paramArrayOfbyte[paramInt2] = (byte) (byte) (paramInt1 >>> 24);
+            paramArrayOfbyte[paramInt2 + 1] = (byte) (byte) (paramInt1 >>> 16);
+            paramArrayOfbyte[paramInt2 + 2] = (byte) (byte) (paramInt1 >>> 8);
+            paramArrayOfbyte[paramInt2 + 3] = (byte) (byte) paramInt1;
         }
 
         private int b(int paramInt1, int paramInt2, int paramInt3) {
@@ -530,13 +871,13 @@ public class xzdEncrypt {
             int n2 = 63;
             int n4;
             int n5;
-            Label_0082: {
+            Label_0082:
+            {
                 int n3;
                 if (n < 56) {
                     n2 = 55 - n;
                     n3 = length - n;
-                }
-                else {
+                } else {
                     if (n != 56) {
                         n4 = 63 - n + 56;
                         n5 = length + 64 - n + 64;
@@ -555,14 +896,14 @@ public class xzdEncrypt {
                 array2[n6] = 0;
             }
             final long n7 = length * 8L;
-            final byte b = (byte)(n7 & 0xFFL);
-            final byte b2 = (byte)(n7 >> 8 & 0xFFL);
-            final byte b3 = (byte)(n7 >> 16 & 0xFFL);
-            final byte b4 = (byte)(n7 >> 24 & 0xFFL);
-            final byte b5 = (byte)(n7 >> 32 & 0xFFL);
-            final byte b6 = (byte)(0L);
-            final byte b7 = (byte)(0);
-            final byte b8 = (byte)(0);
+            final byte b = (byte) (n7 & 0xFFL);
+            final byte b2 = (byte) (n7 >> 8 & 0xFFL);
+            final byte b3 = (byte) (n7 >> 16 & 0xFFL);
+            final byte b4 = (byte) (n7 >> 24 & 0xFFL);
+            final byte b5 = (byte) (n7 >> 32 & 0xFFL);
+            final byte b6 = (byte) (0L);
+            final byte b7 = (byte) (0);
+            final byte b8 = (byte) (0);
             final int n8 = n6 + 1;
             array2[n6] = b8;
             final int n9 = n8 + 1;
@@ -617,6 +958,7 @@ public class xzdEncrypt {
             return d(a(paramArrayOfbyte));
         }
     }
+
     static class m {
         public static byte[] a(final String s, final String s2) {
             final byte[] array = new byte[64];
@@ -630,8 +972,7 @@ public class xzdEncrypt {
                 final byte[] a = z.a(s2.getBytes());
                 n = a.length;
                 System.arraycopy(a, 0, array3, 0, n);
-            }
-            else {
+            } else {
                 final byte[] bytes = s2.getBytes();
                 System.arraycopy(bytes, 0, array3, 0, bytes.length);
             }
@@ -645,8 +986,8 @@ public class xzdEncrypt {
                 ++n;
             }
             while (i < 64) {
-                array[i] = (byte)(array3[i] ^ 0x36);
-                array2[i] = (byte)(array3[i] ^ 0x5C);
+                array[i] = (byte) (array3[i] ^ 0x36);
+                array2[i] = (byte) (array3[i] ^ 0x5C);
                 ++i;
             }
             return z.a(a(array2, z.a(a(array, s.getBytes()))));
@@ -670,25 +1011,26 @@ public class xzdEncrypt {
         private static final char[] g;
 
         static {
-            a = (char)Integer.parseInt("00000011", 2);
-            b = (char)Integer.parseInt("00001111", 2);
-            c = (char)Integer.parseInt("00111111", 2);
-            d = (char)Integer.parseInt("11111100", 2);
-            e = (char)Integer.parseInt("11110000", 2);
-            f = (char)Integer.parseInt("11000000", 2);
-            g = new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/' };
+            a = (char) Integer.parseInt("00000011", 2);
+            b = (char) Integer.parseInt("00001111", 2);
+            c = (char) Integer.parseInt("00111111", 2);
+            d = (char) Integer.parseInt("11111100", 2);
+            e = (char) Integer.parseInt("11110000", 2);
+            f = (char) Integer.parseInt("11000000", 2);
+            g = new char[]{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
         }
 
         public String a(final byte[] array) {
             final double n = array.length;
             Double.isNaN(n);
-            final StringBuilder sb = new StringBuilder((int)(n * 1.34) + 3);
+            final StringBuilder sb = new StringBuilder((int) (n * 1.34) + 3);
             int i = 0;
             int j = 0;
             int n2 = 0;
             while (i < array.length) {
                 for (j %= 8; j < 8; j += 6) {
-                    Label_0214: {
+                    Label_0214:
+                    {
                         int n6;
                         if (j != 0) {
                             if (j != 2) {
@@ -698,16 +1040,15 @@ public class xzdEncrypt {
                                     if (j != 6) {
                                         break Label_0214;
                                     }
-                                    c = (char)((char)(array[i] & a) << 4);
+                                    c = (char) ((char) (array[i] & a) << 4);
                                     final int n3 = i + 1;
                                     n2 = c;
                                     if (n3 >= array.length) {
                                         break Label_0214;
                                     }
                                     n4 = (array[n3] & e) >>> 4;
-                                }
-                                else {
-                                    c = (char)((char)(array[i] & b) << 2);
+                                } else {
+                                    c = (char) ((char) (array[i] & b) << 2);
                                     final int n5 = i + 1;
                                     n2 = c;
                                     if (n5 >= array.length) {
@@ -716,15 +1057,13 @@ public class xzdEncrypt {
                                     n4 = (array[n5] & f) >>> 6;
                                 }
                                 n6 = (c | n4);
-                            }
-                            else {
+                            } else {
                                 n6 = (array[i] & c);
                             }
+                        } else {
+                            n6 = (char) (array[i] & d) >>> 2;
                         }
-                        else {
-                            n6 = (char)(array[i] & d) >>> 2;
-                        }
-                        n2 = (char)n6;
+                        n2 = (char) n6;
                     }
                     sb.append(g[n2]);
                 }
@@ -738,4 +1077,5 @@ public class xzdEncrypt {
             return sb.toString();
         }
     }
+
 }
